@@ -1,4 +1,4 @@
-Use the Mann-Whitney U test to test for differences between HTTP response times
+Use the [Mann-Whitney U test](http://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test) to test for differences between HTTP response times
 
 Choose an alpha
 
@@ -24,7 +24,7 @@ Usage of ./http-mwu:
 
 ```
 
-If you have WAVSEP set up, you can configure wavsep-demo.sh to point to your wavsep installation:
+If you have [WAVSEP](http://sourceforge.net/projects/wavsep/) set up, you can configure wavsep-demo.sh to point to your wavsep installation:
 
 ```
 $ ./wavsep-demo.sh
