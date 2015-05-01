@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"io/ioutil"
 	"log"
 	"math"
@@ -109,7 +110,7 @@ func mwu(xs, ys []time.Duration) (p float64) {
 
 }
 
-func sampleResponseTime(cli *http.Client, r *Request) (t time.Duration,
+func sampleResponseTime(rt http.RoundTripper, r *Request) (t time.Duration,
 	err error) {
 
 	var req *http.Request
@@ -122,13 +123,13 @@ func sampleResponseTime(cli *http.Client, r *Request) (t time.Duration,
 	}
 
 	start := time.Now()
-	resp, err := cli.Do(req)
+	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		return 0, err
 	}
 
-	ioutil.ReadAll(resp.Body)
 	t = time.Since(start)
+	io.Copy(ioutil.Discard, resp.Body)
 	resp.Body.Close()
 	return t, nil
 }
@@ -142,25 +143,24 @@ func sampleResponseTimes(xreq, yreq *Request, s *SampleSettings) (
 		Dial: (&net.Dialer{
 			Timeout: s.RequestTimeout,
 		}).Dial}
-	cli := &http.Client{Transport: transport}
 
 	// first reqs will be outliers due to e.g., TCP handshake. discard them
 	for i := 0; i < s.NThrowaways; i++ {
-		if _, err = sampleResponseTime(cli, xreq); err != nil {
+		if _, err = sampleResponseTime(transport, xreq); err != nil {
 			return nil, nil, err
 		}
 
-		if _, err = sampleResponseTime(cli, yreq); err != nil {
+		if _, err = sampleResponseTime(transport, yreq); err != nil {
 			return nil, nil, err
 		}
 	}
 
 	for i := 0; i < s.SampleSize; i++ {
-		if xs[i], err = sampleResponseTime(cli, xreq); err != nil {
+		if xs[i], err = sampleResponseTime(transport, xreq); err != nil {
 			return nil, nil, err
 		}
 
-		if ys[i], err = sampleResponseTime(cli, yreq); err != nil {
+		if ys[i], err = sampleResponseTime(transport, yreq); err != nil {
 			return nil, nil, err
 		}
 	}
